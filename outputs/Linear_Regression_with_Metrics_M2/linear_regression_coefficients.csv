@@ -1,0 +1,6 @@
+Feature,Coefficient
+glucose,32.62832575543175
+glucose_lag_1,-1.3976859378440487
+glucose_lag_3,0.17743076291595095
+glucose_lag_6,-0.32216526802108114
+glucose_roll_mean_1h,-0.8252309076682562

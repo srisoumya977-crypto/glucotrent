@@ -1,18 +1,197 @@
 {% extends "base.html" %}
-{% block title %}Models{% endblock %}
+{% block title %}ML Models{% endblock %}
 {% block content %}
 <section class="hero">
-    <span class="eyebrow">models/</span>
-    <h1>Models</h1>
-    <p>No models trained yet &mdash; the <code>models/</code> folder mirrors
-        placement_prediction's and is where trained model files (e.g. <code>.pkl</code>) go.</p>
+    <span class="eyebrow">M2 · Machine Learning Models</span>
+    <h1>Model Results</h1>
+    <p>Five M2 modeling approaches applied to the GlucoBench CGM dataset — regression forecasting, binary classification, multi-class trend prediction, and regularisation.</p>
 </section>
 
-<h2>Suggested next scripts (per target)</h2>
-<ul class="target-list">
-    <li><b>glucose_lead_1 (regression):</b> Linear_Regression_with_Metrics_M2.py style script</li>
-    <li><b>target_binary:</b> Logistic_Regression_Binary_Classifi_M2.py style script</li>
-    <li><b>target_ada3 / target_5class:</b> Multinomial_Logistic_Regre_for_Multiclas.py style script</li>
-    <li><b>target_trend:</b> multinomial classifier, same pattern, 5 balanced classes</li>
-</ul>
+<!-- ── TAB NAV ── -->
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; border-bottom:2px solid var(--line); padding-bottom:12px;">
+    <button class="tab-btn active" data-tab="lr" onclick="showTab('lr',this)">1. Linear Regression</button>
+    <button class="tab-btn" data-tab="cfne" onclick="showTab('cfne',this)">2. CFNE vs GD</button>
+    <button class="tab-btn" data-tab="bin" onclick="showTab('bin',this)">3. Binary Logistic</button>
+    <button class="tab-btn" data-tab="multi" onclick="showTab('multi',this)">4. Multinomial</button>
+    <button class="tab-btn" data-tab="reg" onclick="showTab('reg',this)">5. Regularisation</button>
+</div>
+
+<!-- ── 1. MULTIPLE LINEAR REGRESSION ── -->
+<div id="tab-lr" class="tab-panel">
+    <h2>Multiple Linear Regression — Glucose Forecasting</h2>
+    <p>Features: <code>glucose</code>, <code>glucose_lag_1/3/6</code>, <code>glucose_roll_mean_1h</code> → Target: <code>glucose_lead_1</code></p>
+    
+    <div class="card-grid" style="grid-template-columns:repeat(4,1fr); margin-top:20px;">
+        {% if lr_metrics %}
+            {% for k,v in lr_metrics.items() %}
+            <div class="card" style="text-align:center;">
+                <h3>{{ k }}</h3>
+                <p style="font-size:1.6rem; font-weight:700; color:var(--teal-deep);">{{ "%.4f"|format(v) }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card"><p>Run <code>main.py</code> to generate model metrics.</p></div>
+        {% endif %}
+    </div>
+    
+    <div class="card-grid" style="margin-top:24px;">
+        {% for img_name in ["actual_vs_predicted.png","residual_plot.png","feature_coefficients.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Linear_Regression_with_Metrics_M2/images/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── 2. CFNE vs GD ── -->
+<div id="tab-cfne" class="tab-panel" style="display:none;">
+    <h2>Closed-Form Normal Equation vs Gradient Descent</h2>
+    <p>Both methods trained from scratch (NumPy only, no sklearn) on <code>glucose_lead_1</code> forecasting.</p>
+    
+    {% if cfne_gd_metrics %}
+    <table style="margin-top:20px;">
+        <thead><tr><th>Method</th><th>MSE</th><th>R²</th></tr></thead>
+        <tbody>
+            {% for row in cfne_gd_metrics %}
+            <tr>
+                <td><b>{{ row.Method }}</b></td>
+                <td>{{ "%.6f"|format(row.MSE) }}</td>
+                <td>{{ "%.6f"|format(row.R2) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="card" style="margin-top:20px;"><p>Run <code>main.py</code> to generate comparison metrics.</p></div>
+    {% endif %}
+    
+    <div class="card-grid" style="margin-top:24px;">
+        {% for img_name in ["actual_vs_predicted.png","residual_comparison.png","gradient_descent_loss.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Linear_Regression_CFNE_GD_Compare_M2/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── 3. BINARY LOGISTIC REGRESSION ── -->
+<div id="tab-bin" class="tab-panel" style="display:none;">
+    <h2>Binary Logistic Regression — Glycemic Range Warning</h2>
+    <p>Custom gradient-descent logistic regression. Target: <code>target_binary</code> (In Range vs Out of Range). Features: glucose, roll-mean, lag-1.</p>
+    
+    <div class="card-grid" style="grid-template-columns:repeat(4,1fr); margin-top:20px;">
+        {% if bin_metrics %}
+            {% for k,v in bin_metrics.items() %}
+            <div class="card" style="text-align:center;">
+                <h3>{{ k }}</h3>
+                <p style="font-size:1.6rem; font-weight:700; color:var(--teal-deep);">{{ "%.4f"|format(v) }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card"><p>Run <code>main.py</code> to generate metrics.</p></div>
+        {% endif %}
+    </div>
+    
+    <div class="card-grid" style="margin-top:24px;">
+        {% for img_name in ["01_sigmoid.png","02_cross_entropy_loss.png","03_confusion_matrix.png","04_decision_boundary_hyperplane.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Logistic_Regression_Binary_Classify_M2/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── 4. MULTINOMIAL LOGISTIC REGRESSION ── -->
+<div id="tab-multi" class="tab-panel" style="display:none;">
+    <h2>Multinomial Logistic Regression — 5-Class Trend Prediction</h2>
+    <p>Softmax regression using <code>lbfgs</code> solver. Target: <code>target_trend</code> (Falling Rapidly / Falling / Stable / Rising / Rising Rapidly).</p>
+    
+    <div class="card-grid" style="grid-template-columns:repeat(4,1fr); margin-top:20px;">
+        {% if multi_metrics %}
+            {% for k,v in multi_metrics.items() %}
+            <div class="card" style="text-align:center;">
+                <h3>{{ k }}</h3>
+                <p style="font-size:1.6rem; font-weight:700; color:var(--teal-deep);">{{ "%.4f"|format(v) }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card"><p>Run <code>main.py</code> to generate metrics.</p></div>
+        {% endif %}
+    </div>
+    
+    <div class="card-grid" style="margin-top:24px;">
+        {% for img_name in ["confusion_matrix.png","class_distribution.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Multinomial_Logistic_Regre_for_Multiclass_M2/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ── 5. REGULARISATION ── -->
+<div id="tab-reg" class="tab-panel" style="display:none;">
+    <h2>Regularisation — Ridge (L2) vs Lasso (L1) vs Elastic Net</h2>
+    <p>Applied to <code>target_binary</code>. Compares coefficient shrinkage, sparsity (Lasso feature selection), and model performance.</p>
+    
+    {% if reg_models %}
+    <table style="margin-top:20px;">
+        <thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1 Score</th></tr></thead>
+        <tbody>
+            {% for row in reg_models %}
+            <tr>
+                <td><b>{{ row.Model }}</b></td>
+                <td>{{ "%.4f"|format(row.Accuracy) }}</td>
+                <td>{{ "%.4f"|format(row.Precision) }}</td>
+                <td>{{ "%.4f"|format(row.Recall) }}</td>
+                <td>{{ "%.4f"|format(row.F1_Score) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <div class="card" style="margin-top:20px;"><p>Run <code>main.py</code> to generate regularisation comparison.</p></div>
+    {% endif %}
+    
+    <div class="card-grid" style="margin-top:24px;">
+        {% for img_name in ["L1_vs_L2_Regularisation.png","Lasso_Sparsity_Graph.png","Coefficient_Comparison.png","Model_Performance.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Regularization_ridg_laso_elastic_outputs/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.tab-btn {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--muted);
+    transition: all 0.2s;
+}
+.tab-btn:hover { background: #e8f4f1; color: var(--teal-deep); }
+.tab-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+</style>
+
+<script>
+function showTab(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabId).style.display = 'block';
+    btn.classList.add('active');
+}
+</script>
 {% endblock %}

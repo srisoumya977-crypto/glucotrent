@@ -85,11 +85,14 @@ scale_cols = [c for c in numeric_cols if c not in ALL_TARGET_CANDIDATES]
 scaler = StandardScaler()
 processed_df[scale_cols] = scaler.fit_transform(processed_df[scale_cols])
 
+import joblib
+joblib.dump(scaler, os.path.join(BASE_DIR, "dataset", "final_scaler.pkl"))
+
 # --------------------------------------------
-# Drop the target framings you are NOT using this run, and drop
-# identifier columns not suited as model features
+# Drop identifier columns not suited as model features
+# (Note: We retain all target candidate columns in final_preprocess_M2.csv,
+# matching placement_prediction convention so downstream model scripts can use them)
 # --------------------------------------------
-processed_df.drop(columns=OTHER_TARGETS, errors="ignore", inplace=True)
 processed_df.drop(columns=["user_id", "timestamp"], errors="ignore", inplace=True)
 
 # --------------------------------------------

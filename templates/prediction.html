@@ -2,12 +2,154 @@
 {% block title %}Prediction{% endblock %}
 {% block content %}
 <section class="hero">
-    <span class="eyebrow">GlucoTrend</span>
-    <h1>Prediction</h1>
+    <span class="eyebrow">Live ML Inference</span>
+    <h1>Glucose Prediction</h1>
+    <p>Enter your CGM sensor readings to get a glucose forecast, glycemic range warning, and glucose trend classification — powered by trained M2 models.</p>
 </section>
-<div class="stub-note">
-    This page is a placeholder, same as placement_prediction's structure. Wire it up once
-    you've picked a target framing and trained a model (e.g. a form that posts recent
-    readings and returns a forecast or risk class).
+
+<div class="card-grid" style="grid-template-columns: 1fr 1fr; gap: 32px;">
+
+    <!-- FORM CARD -->
+    <div class="card">
+        <h2 style="margin-bottom:20px;">Enter CGM Readings</h2>
+        <form method="POST" action="/prediction" id="pred-form">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+
+                <div>
+                    <label for="glucose" style="font-weight:600; display:block; margin-bottom:6px;">
+                        Current Glucose (mg/dL)
+                        <span style="font-weight:400; color:var(--muted); font-size:0.85rem;">  Normal: 70–180</span>
+                    </label>
+                    <input type="number" step="0.01" id="glucose" name="glucose" required
+                           value="{{ form_data.get('glucose', '') }}"
+                           placeholder="e.g. 145.0"
+                           style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:1rem; background:var(--paper); color:var(--ink);">
+                </div>
+
+                <div>
+                    <label for="glucose_lag_1" style="font-weight:600; display:block; margin-bottom:6px;">
+                        Glucose 5 min ago — Lag 1 (mg/dL)
+                    </label>
+                    <input type="number" step="0.01" id="glucose_lag_1" name="glucose_lag_1" required
+                           value="{{ form_data.get('glucose_lag_1', '') }}"
+                           placeholder="e.g. 140.0"
+                           style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:1rem; background:var(--paper); color:var(--ink);">
+                </div>
+
+                <div>
+                    <label for="glucose_lag_3" style="font-weight:600; display:block; margin-bottom:6px;">
+                        Glucose 15 min ago — Lag 3 (mg/dL)
+                    </label>
+                    <input type="number" step="0.01" id="glucose_lag_3" name="glucose_lag_3" required
+                           value="{{ form_data.get('glucose_lag_3', '') }}"
+                           placeholder="e.g. 132.0"
+                           style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:1rem; background:var(--paper); color:var(--ink);">
+                </div>
+
+                <div>
+                    <label for="glucose_lag_6" style="font-weight:600; display:block; margin-bottom:6px;">
+                        Glucose 30 min ago — Lag 6 (mg/dL)
+                    </label>
+                    <input type="number" step="0.01" id="glucose_lag_6" name="glucose_lag_6" required
+                           value="{{ form_data.get('glucose_lag_6', '') }}"
+                           placeholder="e.g. 120.0"
+                           style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:1rem; background:var(--paper); color:var(--ink);">
+                </div>
+
+                <div>
+                    <label for="glucose_roll_mean_1h" style="font-weight:600; display:block; margin-bottom:6px;">
+                        1-Hour Rolling Mean Glucose (mg/dL)
+                    </label>
+                    <input type="number" step="0.01" id="glucose_roll_mean_1h" name="glucose_roll_mean_1h" required
+                           value="{{ form_data.get('glucose_roll_mean_1h', '') }}"
+                           placeholder="e.g. 135.0"
+                           style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:1rem; background:var(--paper); color:var(--ink);">
+                </div>
+
+                <button type="submit" id="submit-btn"
+                        style="margin-top:8px; padding:12px 24px; background:var(--teal); color:white; border:none; border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer; transition:background 0.2s;">
+                    🔬 Run Prediction
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- RESULTS CARD -->
+    <div class="card" style="display:flex; flex-direction:column;">
+        <h2 style="margin-bottom:20px;">Prediction Results</h2>
+
+        {% if error_message %}
+            <div style="background:#fff0f0; border:1px solid #f5c6c6; border-radius:8px; padding:16px; color:#c0392b;">
+                <strong>Error:</strong> {{ error_message }}
+            </div>
+        {% elif prediction_result %}
+            <!-- Forecast -->
+            <div style="background:linear-gradient(135deg,#e8f4f1,#f0faf7); border:1px solid var(--teal-light,#a8d8cd); border-radius:12px; padding:20px; margin-bottom:16px; text-align:center;">
+                <p style="margin:0; font-size:0.88rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Glucose Forecast (Next 5 min)</p>
+                <p style="margin:8px 0 0; font-size:2.2rem; font-weight:800; color:var(--teal-deep);">{{ prediction_result.forecast }}</p>
+                <p style="margin:4px 0 0; font-size:0.82rem; color:var(--muted);">Multiple Linear Regression model</p>
+            </div>
+
+            <!-- Range Status -->
+            <div style="border-radius:12px; padding:20px; margin-bottom:16px; text-align:center;
+                        background: {% if prediction_result.range_status == 'In Range' %}linear-gradient(135deg,#eafbea,#f0fff0){% else %}linear-gradient(135deg,#fff7e6,#fffaf0){% endif %};
+                        border: 1px solid {% if prediction_result.range_status == 'In Range' %}#a5d6a7{% else %}#ffcc80{% endif %};">
+                <p style="margin:0; font-size:0.88rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Glycemic Range Status</p>
+                <p style="margin:8px 0 0; font-size:1.8rem; font-weight:700;
+                          color: {% if prediction_result.range_status == 'In Range' %}#2e7d32{% else %}#e65100{% endif %};">
+                    {% if prediction_result.range_status == 'In Range' %}✅{% else %}⚠️{% endif %}
+                    {{ prediction_result.range_status }}
+                </p>
+                <p style="margin:4px 0 0; font-size:0.85rem; color:var(--muted);">
+                    Hyperglycemia probability: <b>{{ prediction_result.range_probability }}</b>
+                </p>
+                <p style="margin:2px 0 0; font-size:0.82rem; color:var(--muted);">Binary Logistic Regression</p>
+            </div>
+
+            <!-- Trend Class -->
+            <div style="background:linear-gradient(135deg,#f3e5f5,#fce4ec); border:1px solid #ce93d8; border-radius:12px; padding:20px; text-align:center;">
+                <p style="margin:0; font-size:0.88rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Glucose Trend</p>
+                <p style="margin:8px 0 0; font-size:1.8rem; font-weight:700; color:#6a1b9a;">
+                    {{ prediction_result.trend }}
+                </p>
+                <p style="margin:4px 0 0; font-size:0.82rem; color:var(--muted);">Multinomial Logistic Regression (Softmax, 5-class)</p>
+            </div>
+
+        {% else %}
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:12px; color:var(--muted); text-align:center; padding:40px;">
+                <div style="font-size:3rem;">🩺</div>
+                <p style="margin:0; font-size:1rem;">Fill in the form and click <strong>Run Prediction</strong> to see results.</p>
+                <p style="margin:0; font-size:0.85rem;">Results are computed live using trained M2 models (Linear Regression, Binary Logistic Regression, and Multinomial Logistic Regression).</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
+
+<!-- Model Info Strip -->
+<div class="card" style="margin-top:24px; background:linear-gradient(135deg,#1e2a38,#2d3e50); color:white; border:none;">
+    <h3 style="color:#7ecdc4;">📊 Models Used for Prediction</h3>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:16px;">
+        <div>
+            <p style="font-weight:700; margin:0 0 4px; color:#7ecdc4;">Linear Regression</p>
+            <p style="margin:0; font-size:0.85rem; opacity:0.8;">Multiple Linear Regression trained on 12,584 CGM records. Forecasts next 5-minute glucose value (mg/dL). R² = 0.9992.</p>
+        </div>
+        <div>
+            <p style="font-weight:700; margin:0 0 4px; color:#7ecdc4;">Binary Logistic Regression</p>
+            <p style="margin:0; font-size:0.85rem; opacity:0.8;">Custom gradient-descent logistic regression. Detects Out-of-Range (hyperglycemia) risk. Accuracy = 97.76%.</p>
+        </div>
+        <div>
+            <p style="font-weight:700; margin:0 0 4px; color:#7ecdc4;">Multinomial (Softmax)</p>
+            <p style="margin:0; font-size:0.85rem; opacity:0.8;">5-class trend classifier: Stable / Rising / Rising Rapidly / Falling / Falling Rapidly. Weighted F1 = 0.9725.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('pred-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = '⏳ Computing...';
+    btn.style.opacity = '0.7';
+    btn.disabled = true;
+});
+</script>
 {% endblock %}

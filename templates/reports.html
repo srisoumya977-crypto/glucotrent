@@ -1,12 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Reports{% endblock %}
+{% block title %}Evaluation Reports{% endblock %}
 {% block content %}
 <section class="hero">
-    <span class="eyebrow">GlucoTrend</span>
-    <h1>Reports</h1>
+    <span class="eyebrow">M2 Evaluation</span>
+    <h1>Model Evaluation Reports</h1>
+    <p>Comprehensive evaluation of all M2 models including class balance analysis, confusion matrices, and regularisation coefficient comparisons.</p>
 </section>
-<div class="stub-note">
-    This page is a placeholder, same as placement_prediction's structure. A natural fit
-    here later: the target class-balance report and model evaluation metrics.
+
+<!-- Target Class Balance Report -->
+<div class="card" style="margin-bottom:24px;">
+    <h2>Target Variable Class Balance Report</h2>
+    {% if class_balance_report %}
+    <pre style="background:#f8f9fa; border:1px solid var(--line); border-radius:8px; padding:20px; overflow-x:auto; font-size:0.82rem; line-height:1.7; white-space:pre-wrap;">{{ class_balance_report }}</pre>
+    {% else %}
+    <p>Run <code>python main.py</code> to generate the class balance report.</p>
+    {% endif %}
+</div>
+
+<!-- All Model Plots -->
+<div class="card" style="margin-bottom:24px;">
+    <h2>Confusion Matrices</h2>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr; gap:24px; margin-top:16px;">
+        <div>
+            <h3 style="margin-bottom:12px;">Binary Logistic Regression</h3>
+            <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+                <img src="/outputs/Logistic_Regression_Binary_Classify_M2/03_confusion_matrix.png"
+                     alt="Binary Confusion Matrix" style="width:100%;height:auto;display:block;"
+                     onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>Run pipeline first.</div>';">
+            </div>
+        </div>
+        <div>
+            <h3 style="margin-bottom:12px;">Multinomial Logistic Regression</h3>
+            <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+                <img src="/outputs/Multinomial_Logistic_Regre_for_Multiclass_M2/confusion_matrix.png"
+                     alt="Multinomial Confusion Matrix" style="width:100%;height:auto;display:block;"
+                     onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>Run pipeline first.</div>';">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regularisation Coefficients -->
+<div class="card" style="margin-bottom:24px;">
+    <h2>Regularisation Plots</h2>
+    <div class="card-grid" style="grid-template-columns:repeat(2,1fr); gap:24px; margin-top:16px;">
+        {% for img_name in ["L1_vs_L2_Regularisation.png","Lasso_Sparsity_Graph.png","Coefficient_Comparison.png","Model_Performance.png"] %}
+        <div>
+            <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+                <img src="/outputs/Regularization_ridg_laso_elastic_outputs/{{ img_name }}"
+                     alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                     onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- GD Convergence -->
+<div class="card">
+    <h2>Gradient Descent Convergence</h2>
+    <div style="max-width:600px; margin:16px auto 0;">
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Linear_Regression_CFNE_GD_Compare_M2/gradient_descent_loss.png"
+                 alt="GD Convergence" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>Run pipeline first.</div>';">
+        </div>
+    </div>
 </div>
 {% endblock %}

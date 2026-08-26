@@ -30,6 +30,11 @@ PIPELINE = [
     "clean_embedding_encode_M2.py",
     "clean_minmax_stand_norma_M2.py",
     "final_preprocess_M2.py",              # set TARGET_COLUMN inside this file first
+    "Linear_Regression_with_Metrics_M2.py",
+    "Linear_Regression_CFNE_GD_Compare_M2.py",
+    "Logistic_Regression_Binary_Classifi_M2.py",
+    "Multinomial_Logistic_Regre_for_Multiclas.py",
+    "Regularizatio_ridge_laso_elastic_M2.py",
 ]
 
 

@@ -1,0 +1,4 @@
+Model,Accuracy,Precision,Recall,F1_Score
+Ridge (L2),0.967270416269463,0.0,0.0,0.0
+Lasso (L1),0.967270416269463,0.0,0.0,0.0
+Elastic Net,0.967270416269463,0.0,0.0,0.0

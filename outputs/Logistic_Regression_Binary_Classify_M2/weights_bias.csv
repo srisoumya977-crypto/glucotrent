@@ -1,0 +1,5 @@
+Parameter,Value
+weight_glucose,0.697545100764383
+weight_glucose_roll_mean_1h,0.6766138396309587
+weight_glucose_lag_1,0.696619646195573
+bias,-5.08543125223686

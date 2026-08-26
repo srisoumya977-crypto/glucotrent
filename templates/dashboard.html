@@ -1,12 +1,92 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Analytics Dashboard{% endblock %}
 {% block content %}
 <section class="hero">
-    <span class="eyebrow">GlucoTrend</span>
-    <h1>Dashboard</h1>
+    <span class="eyebrow">Summary Statistics</span>
+    <h1>Analytics Dashboard</h1>
+    <p>Real-time summary of the GlucoBench dataset after preprocessing and target engineering.</p>
 </section>
-<div class="stub-note">
-    This page is a placeholder, same as placement_prediction's structure. A natural fit
-    here later: per-patient glucose trend charts and current in-range/out-of-range status.
+
+<!-- KPI Stats -->
+<div class="card-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:28px;">
+    <div class="card" style="text-align:center;">
+        <h3>Total CGM Readings</h3>
+        <p style="font-size:2rem; font-weight:800; color:var(--teal-deep); margin:8px 0 0;">{{ stats.total_readings }}</p>
+    </div>
+    <div class="card" style="text-align:center;">
+        <h3>Time in Range</h3>
+        <p style="font-size:2rem; font-weight:800; color:#2e7d32; margin:8px 0 0;">{{ stats.in_range_pct }}</p>
+        <p style="font-size:0.8rem; color:var(--muted); margin:2px 0 0;">70–180 mg/dL</p>
+    </div>
+    <div class="card" style="text-align:center;">
+        <h3>Out of Range</h3>
+        <p style="font-size:2rem; font-weight:800; color:#e65100; margin:8px 0 0;">{{ stats.out_range_pct }}</p>
+        <p style="font-size:0.8rem; color:var(--muted); margin:2px 0 0;">Hyperglycemia Risk</p>
+    </div>
+    <div class="card" style="text-align:center;">
+        <h3>Average Glucose</h3>
+        <p style="font-size:2rem; font-weight:800; color:var(--teal-deep); margin:8px 0 0;">{{ stats.avg_glucose }}</p>
+    </div>
+</div>
+
+<!-- M2 Model Performance Summary -->
+<div class="card" style="margin-bottom:24px;">
+    <h2 style="margin-bottom:20px;">M2 Model Performance Summary</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th>Task</th>
+                <th>Target</th>
+                <th>Key Metric</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><b>Multiple Linear Regression</b></td>
+                <td>Regression</td>
+                <td>glucose_lead_1</td>
+                <td>R² ≈ 0.9992</td>
+            </tr>
+            <tr>
+                <td><b>Normal Eq. vs Gradient Descent</b></td>
+                <td>Comparison</td>
+                <td>glucose_lead_1</td>
+                <td>CFNE MSE ≈ 0.679 | GD MSE ≈ 1.66</td>
+            </tr>
+            <tr>
+                <td><b>Binary Logistic Regression (Custom)</b></td>
+                <td>Binary Classification</td>
+                <td>target_binary</td>
+                <td>Accuracy ≈ 97.76%</td>
+            </tr>
+            <tr>
+                <td><b>Multinomial Logistic Regression</b></td>
+                <td>5-Class Classification</td>
+                <td>target_trend</td>
+                <td>Weighted F1 ≈ 0.9725</td>
+            </tr>
+            <tr>
+                <td><b>Ridge / Lasso / Elastic Net</b></td>
+                <td>Regularisation</td>
+                <td>target_binary</td>
+                <td>Lasso: 24/29 features zeroed</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Target Distribution Visual -->
+<div class="card">
+    <h2 style="margin-bottom:16px;">Target Variable Analysis Plots</h2>
+    <div class="card-grid" style="grid-template-columns:repeat(3,1fr);">
+        {% for img_name in ["target_binary_distribution.png","target_ada3_distribution.png","target_trend_distribution.png"] %}
+        <div style="background:#eef2f3;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+            <img src="/outputs/Target_Variable_Analysis_M2/{{ img_name }}"
+                 alt="{{ img_name }}" style="width:100%;height:auto;display:block;"
+                 onerror="this.parentElement.innerHTML='<div style=\'padding:30px;color:var(--muted);text-align:center;\'>{{ img_name }}<br>Run pipeline first.</div>';">
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

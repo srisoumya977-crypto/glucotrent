@@ -1,0 +1,33 @@
+MULTINOMIAL LOGISTIC REGRESSION RESULTS
+===========================================================================
+
+Dataset: C:\Users\HP\PycharmProjects\GlucoTrend\dataset\final_preprocess_M2.csv
+Target: target_trend
+Number of classes: 5
+
+CLASS MAPPING
+0 = falling
+1 = falling rapidly
+2 = rising
+3 = rising rapidly
+4 = stable
+
+MODEL PERFORMANCE
+Accuracy: 0.9727
+Precision: 0.9729
+Recall: 0.9727
+F1 Score: 0.9725
+Cross-Entropy Loss: 0.1708
+
+CLASSIFICATION REPORT
+                 precision    recall  f1-score   support
+
+        falling       0.98      0.99      0.99       675
+falling rapidly       1.00      1.00      1.00       631
+         rising       0.98      0.91      0.94       630
+ rising rapidly       0.95      0.98      0.96       625
+         stable       0.96      0.98      0.97       586
+
+       accuracy                           0.97      3147
+      macro avg       0.97      0.97      0.97      3147
+   weighted avg       0.97      0.97      0.97      3147
